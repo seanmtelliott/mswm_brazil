@@ -70,7 +70,9 @@ twostate_summary[[j]] <- c(j,i,break_date)
 }
 
 twostate_summary <- do.call(rbind.data.frame,twostate_summary)
-names(twostate_summary) <- c("State","Break Date")
+names(twostate_summary) <- c("index","State","Break Date")
+
+write_csv(twostate_summary,"twost_sum.csv")
 
 
 
@@ -80,10 +82,21 @@ names(twostate_summary) <- c("State","Break Date")
 
 sample_states <- c("MINAS GERAIS","RIO GRANDE DO SUL","SAO PAULO")
 
+#Fit three state models
+three_st_plot_dir <- file.path(plot_dir,"three_state")
+for(i in sample_states){
+  j=j+1
+  hmm2st_probs <- fit_state_hmm(data_date_filter,estado=i,num_states=3)
+  plot_hmm_probs(data_date_filter,hmm2st_probs,estado=i,directory=three_st_plot_dir) 
+  
+}
+
 data_date_filter <- data_date_filter %>% filter(ESTADO %in% sample_states)
   
 set.seed(2019)
 optimal_states <- state_determination(data_date_filter,max_states=3)
+
+write_csv(optimal_states,"opt_states.csv")
 
 # Show plots for optimal number of states
 
@@ -116,7 +129,10 @@ selected_model <- which(aic_model==min(aic_model))
 mswm_model_list[[j]] <- sample_mswm[[selected_model]]
 }
 
+aic_list <- do.call(rbind.data.frame,aic_list)
+names(aic_list) <- c("State","p=1","p=2","p=3","p=4")
 
+write_csv(aic_list,"aic_list.csv")
 # Select best model based on AIC
 
 mg_model <- mswm_model_list[[1]]
@@ -127,9 +143,15 @@ sp_model <- mswm_model_list[[3]]
 # Display model diagnostics and posterior probablities
 
 par(mar=c(3,3,3,3))
-plotProb(mswm_model_list[[1]],which=1)
+plotDiag(mswm_model_list[[1]],which=1)
+plotDiag(mswm_model_list[[1]],which=3)
 
-plotDiag(mswm_model_list[[1]],which=2)
+plotDiag(mswm_model_list[[2]],which=1)
+plotDiag(mswm_model_list[[2]],which=3)
+
+plotDiag(mswm_model_list[[3]],which=1)
+plotDiag(mswm_model_list[[3]],which=3)
+
 
 # ARMA models for benchmarking
 
